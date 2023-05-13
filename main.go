@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"maintenance-tasks/api"
+	"maintenance-tasks/manager"
 	"net/http"
 	"os"
 	"os/signal"
@@ -16,6 +17,9 @@ type handler struct {
 }
 
 func main() {
+	manager := manager.Create()
+	manager.Start()
+
 	apiHandler, err := api.CreateHandler()
 	if err != nil {
 		panic(err)

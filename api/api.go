@@ -36,9 +36,14 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	} else if r.URL.Path == "/tasks" {
 		switch r.Method {
 		case http.MethodGet:
+			//tasks, _ := "s" //getAllTasks()
+			// if err != nil {
+			// 	http.Error(w, "Failed to retrieve task from database", http.StatusInternalServerError)
+			// 	return
+			// }
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
-			json.NewEncoder(w).Encode(`{"Role":"Manager","Task":"Hello","Time":123456789}`)
+			json.NewEncoder(w).Encode(1)
 		case http.MethodPost:
 			w.WriteHeader(http.StatusOK)
 			fmt.Fprintf(w, "Created")
