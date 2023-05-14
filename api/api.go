@@ -130,6 +130,25 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			json.NewEncoder(w).Encode(task)
 
 		case http.MethodDelete:
+			// if !isManager(r) {
+			// 	return fmt.Errorf("not allowed"), http.StatusForbidden
+			// }
+
+			taskId := r.URL.Query().Get("id")
+			task_id, err := strconv.Atoi(taskId)
+			if err != nil {
+				http.Error(w, "Invalid id", http.StatusBadRequest)
+				return
+			}
+
+			err = h.m.DeleteTask(task_id)
+			if err != nil {
+				fmt.Println(err)
+				http.Error(w, "Failed", http.StatusForbidden)
+				return
+			}
+			w.WriteHeader(http.StatusOK)
+
 		default:
 			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 			return

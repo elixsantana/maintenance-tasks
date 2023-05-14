@@ -85,3 +85,12 @@ func (m *Manager) GetTask(task_id int, tech_id int) (database.Task, error) {
 	return task, err
 
 }
+
+func (m *Manager) DeleteTask(taskID int) error {
+	err := m.databaseMetadata.DeleteTask(taskID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

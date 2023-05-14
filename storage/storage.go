@@ -183,3 +183,18 @@ func (m *MysqlMetadata) UpdateTask(task Task) (Task, error) {
 
 	return task, nil
 }
+
+func (m *MysqlMetadata) DeleteTask(taskID int) error {
+	stmt, err := m.db.Prepare("DELETE FROM tasks WHERE id = ?")
+	if err != nil {
+		return fmt.Errorf("error: %s", err.Error())
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(taskID)
+	if err != nil {
+		return fmt.Errorf("error: %s", err.Error())
+	}
+
+	return nil
+}
