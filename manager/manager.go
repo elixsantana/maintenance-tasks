@@ -66,3 +66,22 @@ func (m *Manager) CreateTask(summary string, techId string, role string) error {
 
 	return nil
 }
+
+func (m *Manager) UpdateTask(task database.Task) (database.Task, error) {
+	task, err := m.databaseMetadata.UpdateTask(task)
+	if err != nil {
+		return database.Task{}, err
+	}
+
+	return task, err
+}
+
+func (m *Manager) GetTask(task_id int, tech_id int) (database.Task, error) {
+	task, err := m.databaseMetadata.GetTask(task_id, tech_id)
+	if err != nil {
+		return database.Task{}, err
+	}
+
+	return task, err
+
+}

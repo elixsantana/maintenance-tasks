@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"maintenance-tasks/manager"
+	database "maintenance-tasks/storage"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -72,32 +73,61 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			w.WriteHeader(http.StatusOK)
-		case http.MethodDelete:
-			w.WriteHeader(http.StatusOK)
-			fmt.Fprintf(w, "Deleted")
+		// case http.MethodDelete:
+		// 	w.WriteHeader(http.StatusOK)
+		// 	fmt.Fprintf(w, "Deleted")
 		default:
 			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 			return
 		}
 
-	} else if pathRegex := regexp.MustCompile("^/task/(([0-9]+))?$"); pathRegex.MatchString(r.URL.Path) {
+	} else if pathRegex := regexp.MustCompile("^/task"); pathRegex.MatchString(r.URL.Path) {
 		switch r.Method {
-		case http.MethodPut:
-			pathMatches := pathRegex.FindStringSubmatch(r.URL.Path)
-			if len(pathMatches) < 3 || pathMatches[2] == "" {
-				http.Error(w, "Invalid task ID", http.StatusBadRequest)
+		case http.MethodGet:
+			techId := r.URL.Query().Get("techID")
+			tech_id, err := strconv.Atoi(techId)
+			if err != nil {
+				http.Error(w, "Invalid id", http.StatusBadRequest)
 				return
 			}
-			fmt.Println(pathMatches[2])
-			taskID, err := strconv.Atoi(pathMatches[2])
+
+			taskId := r.URL.Query().Get("taskID")
+			task_id, err := strconv.Atoi(taskId)
 			if err != nil {
-				http.Error(w, "Invalid task ID", http.StatusBadRequest)
+				http.Error(w, "Invalid id", http.StatusBadRequest)
+				return
+			}
+
+			task, err := h.m.GetTask(task_id, tech_id)
+			if err != nil {
+				fmt.Println(err)
+				http.Error(w, "Failed to retrieve task from database", http.StatusInternalServerError)
+				return
+			}
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			json.NewEncoder(w).Encode(task)
+		case http.MethodPut:
+			var task database.Task
+			err := json.NewDecoder(r.Body).Decode(&task)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+
+			if task.Summary == "" {
+				http.Error(w, "Task summary is required", http.StatusBadRequest)
+				return
+			}
+
+			task, err = h.m.UpdateTask(task)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
 			}
 
 			w.WriteHeader(http.StatusOK)
-			fmt.Println(taskID)
-			fmt.Fprintf(w, "Updated")
+			json.NewEncoder(w).Encode(task)
 
 		case http.MethodDelete:
 		default:

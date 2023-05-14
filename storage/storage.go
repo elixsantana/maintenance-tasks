@@ -3,6 +3,7 @@ package storage
 import (
 	"database/sql"
 	"fmt"
+	"net/http"
 	"strings"
 	"sync"
 	"time"
@@ -28,7 +29,7 @@ type Task struct {
 func Create(mysqlConfig *MysqlConfig) *MysqlMetadata {
 	return &MysqlMetadata{
 		config: mysqlConfig,
-		uri: fmt.Sprintf("%v:%v@tcp(%v:%v)/",
+		uri: fmt.Sprintf("%v:%v@tcp(%v:%v)/?parseTime=true",
 			mysqlConfig.User,
 			mysqlConfig.Password,
 			mysqlConfig.Host,
@@ -130,4 +131,49 @@ func (m *MysqlMetadata) CreateTask(summary string, tech_id int, role string) err
 
 	return nil
 
+}
+
+func (m *MysqlMetadata) GetTask(id int, techId int) (Task, error) {
+	var task Task
+	query := "SELECT * FROM tasks where id= ? AND technician_id=?"
+
+	stmt, err := m.db.Prepare(query)
+	if err != nil {
+		panic(err.Error())
+	}
+	defer stmt.Close()
+
+	row := stmt.QueryRow(id, techId)
+	switch err := row.Scan(&task.ID, &task.Summary, &task.Performed_date, &task.TechnicianID, &task.Role); err {
+	case sql.ErrNoRows:
+		//fmt.Println("No rows were returned!")
+		return Task{}, err
+	case nil:
+		return task, nil
+	default:
+		panic(err)
+	}
+
+}
+
+func (m *MysqlMetadata) UpdateTask(task Task) (Task, error) {
+	fmt.Println(task)
+	result, err := m.db.Exec("UPDATE tasks SET summary=?, performed_date=?, technician_id=?, role=? WHERE id=?", task.Summary, task.Performed_date, task.TechnicianID, task.Role, task.ID)
+	if err != nil {
+		fmt.Println(err.Error())
+		return task, fmt.Errorf("%d", http.StatusInternalServerError)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		fmt.Println(err.Error())
+		return task, fmt.Errorf("%d", http.StatusInternalServerError)
+	}
+
+	if rowsAffected == 0 {
+		return task, fmt.Errorf("No changes")
+
+	}
+
+	return task, nil
 }
