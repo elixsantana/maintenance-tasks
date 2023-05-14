@@ -56,11 +56,16 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	} else if pathRegex := regexp.MustCompile("^/task"); pathRegex.MatchString(r.URL.Path) {
 		switch r.Method {
 		case http.MethodGet:
-			techId := r.URL.Query().Get("techID")
-			tech_id, err := strconv.Atoi(techId)
-			if err != nil {
-				http.Error(w, "Invalid id", http.StatusBadRequest)
-				return
+			var techIdStr string
+			var techId int
+			var err error
+			if !isManager(role) {
+				techIdStr = r.Header.Get("TechId")
+				techId, err = strconv.Atoi(techIdStr)
+				if err != nil {
+					http.Error(w, "Invalid", http.StatusBadRequest)
+					return
+				}
 			}
 
 			taskId := r.URL.Query().Get("taskID")
@@ -70,7 +75,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			task, err := h.m.GetTask(task_id, tech_id)
+			task, err := h.m.GetTask(task_id, techId, isManager(role))
 			if err != nil {
 				fmt.Println(err)
 				http.Error(w, "Failed to retrieve task from database", http.StatusInternalServerError)
@@ -80,6 +85,10 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
 			json.NewEncoder(w).Encode(task)
 		case http.MethodPost:
+			if isManager(role) {
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
 			err := r.ParseForm()
 			if err != nil {
 				fmt.Println(err)
@@ -106,6 +115,10 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		// 	w.WriteHeader(http.StatusOK)
 		// 	fmt.Fprintf(w, "Deleted")
 		case http.MethodPut:
+			if isManager(role) {
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
 			var task database.Task
 			err := json.NewDecoder(r.Body).Decode(&task)
 			if err != nil {

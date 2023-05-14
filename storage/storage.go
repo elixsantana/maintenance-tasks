@@ -133,9 +133,14 @@ func (m *MysqlMetadata) CreateTask(summary string, tech_id int, role string) err
 
 }
 
-func (m *MysqlMetadata) GetTask(id int, techId int) (Task, error) {
+func (m *MysqlMetadata) GetTask(id int, techId int, manager bool) (Task, error) {
+	var query string
+	query = "SELECT * FROM tasks where id= ? AND technician_id=?"
+	if manager {
+		query = "SELECT * FROM tasks where id= ?"
+	}
+
 	var task Task
-	query := "SELECT * FROM tasks where id= ? AND technician_id=?"
 
 	stmt, err := m.db.Prepare(query)
 	if err != nil {
@@ -143,11 +148,17 @@ func (m *MysqlMetadata) GetTask(id int, techId int) (Task, error) {
 	}
 	defer stmt.Close()
 
-	row := stmt.QueryRow(id, techId)
+	var row *sql.Row
+	if manager {
+		row = stmt.QueryRow(id)
+	} else {
+		row = stmt.QueryRow(id, techId)
+	}
+
 	switch err := row.Scan(&task.ID, &task.Summary, &task.Performed_date, &task.TechnicianID, &task.Role); err {
 	case sql.ErrNoRows:
 		//fmt.Println("No rows were returned!")
-		return Task{}, err
+		return Task{}, nil
 	case nil:
 		return task, nil
 	default:

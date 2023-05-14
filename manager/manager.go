@@ -52,7 +52,7 @@ func (m *Manager) GetAllTasks() ([]database.Task, error) {
 
 func (m *Manager) CreateTask(summary string, techId string, role string) error {
 	id, err := strconv.Atoi(techId)
-	if id < 0 {
+	if id < 1 {
 		return fmt.Errorf("not valid ID")
 	}
 	if err != nil {
@@ -76,8 +76,8 @@ func (m *Manager) UpdateTask(task database.Task) (database.Task, error) {
 	return task, err
 }
 
-func (m *Manager) GetTask(task_id int, tech_id int) (database.Task, error) {
-	task, err := m.databaseMetadata.GetTask(task_id, tech_id)
+func (m *Manager) GetTask(task_id int, tech_id int, manager bool) (database.Task, error) {
+	task, err := m.databaseMetadata.GetTask(task_id, tech_id, manager)
 	if err != nil {
 		return database.Task{}, err
 	}
