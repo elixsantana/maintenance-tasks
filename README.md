@@ -23,6 +23,7 @@ PUT localhost:3000/task
     "technician_id": 2,
     "role": "technician"
 }
+```
 
 # Delete a task
 DELETE localhost:3000/task?id=1
