@@ -36,7 +36,7 @@ func main() {
 	wg.Add(1)
 	go startServer(&wg, srv)
 
-	stopServer(&wg, srv)
+	stopServer(srv)
 	wg.Wait()
 }
 
@@ -49,7 +49,7 @@ func startServer(wg *sync.WaitGroup, srv *http.Server) {
 	}
 }
 
-func stopServer(wg *sync.WaitGroup, srv *http.Server) {
+func stopServer(srv *http.Server) {
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt)
 
