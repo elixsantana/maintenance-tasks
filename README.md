@@ -1,8 +1,10 @@
 # maintenance-tasks
 # Retrieve all tasks
+header: Role: <mananger|technician>
 GET localhost:3000/tasks
 
 # Create a task
+header: Role: <mananger|technician>
 POST localhost:3000/task
 Body -> x-www-form-urlencoded
     
@@ -11,9 +13,20 @@ Body -> x-www-form-urlencoded
     role:technician
 
 # Retrieve a task
-GET localhost:3000/task?taskID=1&techID=2
+## Manager
+header: Role: mananger
+GET localhost:3000/task?id=1
+## Technician
+header: 
+
+Role: technician
+
+TechId: <tech id>
+
+GET localhost:3000/task?id=1
 
 # Update a task  
+header: Role: <mananger|technician>
 PUT localhost:3000/task
 ```json
 {
@@ -26,4 +39,5 @@ PUT localhost:3000/task
 ```
 
 # Delete a task
+header: Role: <mananger|technician>
 DELETE localhost:3000/task?id=1

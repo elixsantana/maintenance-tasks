@@ -68,7 +68,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 
-			taskId := r.URL.Query().Get("taskID")
+			taskId := r.URL.Query().Get("id")
 			task_id, err := strconv.Atoi(taskId)
 			if err != nil {
 				http.Error(w, "Invalid id", http.StatusBadRequest)
