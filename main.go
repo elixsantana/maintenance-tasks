@@ -20,7 +20,7 @@ func main() {
 	manager := manager.Create()
 	manager.Start()
 
-	apiHandler, err := api.CreateHandler()
+	apiHandler, err := api.CreateHandler(manager)
 	if err != nil {
 		panic(err)
 	}

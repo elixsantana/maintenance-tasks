@@ -3,16 +3,20 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"maintenance-tasks/manager"
 	"net/http"
 	"regexp"
 	"strconv"
 )
 
 type Handler struct {
+	m *manager.Manager
 }
 
-func CreateHandler() (*Handler, error) {
-	return &Handler{}, nil
+func CreateHandler(manager *manager.Manager) (*Handler, error) {
+	return &Handler{
+		m: manager,
+	}, nil
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -36,17 +40,38 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	} else if r.URL.Path == "/tasks" {
 		switch r.Method {
 		case http.MethodGet:
-			//tasks, _ := "s" //getAllTasks()
-			// if err != nil {
-			// 	http.Error(w, "Failed to retrieve task from database", http.StatusInternalServerError)
-			// 	return
-			// }
+			tasks, err := h.m.GetAllTasks()
+			if err != nil {
+				fmt.Println(err)
+				http.Error(w, "Failed to retrieve task from database", http.StatusInternalServerError)
+				return
+			}
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
-			json.NewEncoder(w).Encode(1)
+			json.NewEncoder(w).Encode(tasks)
 		case http.MethodPost:
+			err := r.ParseForm()
+			if err != nil {
+				fmt.Println(err)
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+
+			summary := r.PostFormValue("summary")
+			techId := r.PostFormValue("techId")
+			role := r.PostFormValue("role")
+
+			if summary == "" || techId == "" || role == "" {
+				http.Error(w, "Missing required parameters", http.StatusBadRequest)
+				return
+			}
+			err = h.m.CreateTask(summary, techId, role)
+			if err != nil {
+				fmt.Println(err)
+				http.Error(w, "Failed creating task", http.StatusInternalServerError)
+				return
+			}
 			w.WriteHeader(http.StatusOK)
-			fmt.Fprintf(w, "Created")
 		case http.MethodDelete:
 			w.WriteHeader(http.StatusOK)
 			fmt.Fprintf(w, "Deleted")

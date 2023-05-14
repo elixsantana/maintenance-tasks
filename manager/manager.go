@@ -1,8 +1,10 @@
 package manager
 
 import (
+	"fmt"
 	"log"
 	database "maintenance-tasks/storage"
+	"strconv"
 )
 
 type Manager struct {
@@ -37,4 +39,30 @@ func (m *Manager) Start() {
 
 func (m *Manager) Stop() {
 	m.databaseMetadata.Close()
+}
+
+func (m *Manager) GetAllTasks() ([]database.Task, error) {
+	tasks, err := m.databaseMetadata.GetAllTasks()
+	if err != nil {
+		return []database.Task{}, err
+	}
+
+	return tasks, err
+}
+
+func (m *Manager) CreateTask(summary string, techId string, role string) error {
+	id, err := strconv.Atoi(techId)
+	if id < 0 {
+		return fmt.Errorf("not valid ID")
+	}
+	if err != nil {
+		return err
+	}
+
+	err = m.databaseMetadata.CreateTask(summary, id, role)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

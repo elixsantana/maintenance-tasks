@@ -3,7 +3,9 @@ package storage
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 	"sync"
+	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -13,6 +15,14 @@ type MysqlMetadata struct {
 	uri    string
 	mutex  sync.Mutex
 	db     *sql.DB
+}
+
+type Task struct {
+	ID             uint      `json:"id"`
+	Summary        string    `json:"summary"`
+	Performed_date time.Time `json:"performed_date"`
+	TechnicianID   int       `json:"technician_id"`
+	Role           string    `json:"role"`
 }
 
 func Create(mysqlConfig *MysqlConfig) *MysqlMetadata {
@@ -73,11 +83,51 @@ func (m *MysqlMetadata) CreateTaskTable() error {
         summary VARCHAR(2500) NOT NULL,
         performed_date DATE NOT NULL,
         technician_id INT NOT NULL,
-		roles ENUM('technician', 'manager') NOT NULL DEFAULT 'technician'
+		role ENUM('technician', 'manager') NOT NULL DEFAULT 'technician'
     )`)
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func (m *MysqlMetadata) GetAllTasks() ([]Task, error) {
+	rows, err := m.db.Query("SELECT * FROM tasks")
+	if err != nil {
+		return []Task{}, err
+	}
+	defer rows.Close()
+
+	var tasks []Task
+
+	for rows.Next() {
+		var task Task
+		err := rows.Scan(&task.ID, &task.Summary, &task.Performed_date, &task.TechnicianID, &task.Role)
+		if err != nil {
+			return []Task{}, err
+		}
+		tasks = append(tasks, task)
+	}
+
+	return tasks, nil
+}
+
+func (m *MysqlMetadata) CreateTask(summary string, tech_id int, role string) error {
+	now := time.Now()
+	role = strings.ToLower(role)
+
+	stmt, err := m.db.Prepare("INSERT INTO tasks(summary, performed_date, technician_id, role) VALUES (?, ?, ?, ?)")
+	if err != nil {
+		panic(err.Error())
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(summary, now, tech_id, role)
+	if err != nil {
+		return err
+	}
+
+	return nil
+
 }
