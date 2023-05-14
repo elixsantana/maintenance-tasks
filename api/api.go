@@ -50,32 +50,6 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
 			json.NewEncoder(w).Encode(tasks)
-		case http.MethodPost:
-			err := r.ParseForm()
-			if err != nil {
-				fmt.Println(err)
-				http.Error(w, err.Error(), http.StatusBadRequest)
-				return
-			}
-
-			summary := r.PostFormValue("summary")
-			techId := r.PostFormValue("techId")
-			role := r.PostFormValue("role")
-
-			if summary == "" || techId == "" || role == "" {
-				http.Error(w, "Missing required parameters", http.StatusBadRequest)
-				return
-			}
-			err = h.m.CreateTask(summary, techId, role)
-			if err != nil {
-				fmt.Println(err)
-				http.Error(w, "Failed creating task", http.StatusInternalServerError)
-				return
-			}
-			w.WriteHeader(http.StatusOK)
-		// case http.MethodDelete:
-		// 	w.WriteHeader(http.StatusOK)
-		// 	fmt.Fprintf(w, "Deleted")
 		default:
 			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 			return
@@ -107,6 +81,32 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
 			json.NewEncoder(w).Encode(task)
+		case http.MethodPost:
+			err := r.ParseForm()
+			if err != nil {
+				fmt.Println(err)
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+
+			summary := r.PostFormValue("summary")
+			techId := r.PostFormValue("techId")
+			role := r.PostFormValue("role")
+
+			if summary == "" || techId == "" || role == "" {
+				http.Error(w, "Missing required parameters", http.StatusBadRequest)
+				return
+			}
+			err = h.m.CreateTask(summary, techId, role)
+			if err != nil {
+				fmt.Println(err)
+				http.Error(w, "Failed creating task", http.StatusInternalServerError)
+				return
+			}
+			w.WriteHeader(http.StatusOK)
+		// case http.MethodDelete:
+		// 	w.WriteHeader(http.StatusOK)
+		// 	fmt.Fprintf(w, "Deleted")
 		case http.MethodPut:
 			var task database.Task
 			err := json.NewDecoder(r.Body).Decode(&task)
