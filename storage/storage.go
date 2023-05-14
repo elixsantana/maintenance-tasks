@@ -168,14 +168,14 @@ func (m *MysqlMetadata) GetTask(id int, techId int, manager bool) (Task, error) 
 }
 
 func (m *MysqlMetadata) UpdateTask(task Task) (Task, error) {
-	query := "UPDATE tasks SET summary=?, performed_date=?, technician_id=?, role=? WHERE id=?"
+	query := "UPDATE tasks SET summary=?, performed_date=?, role=? WHERE id=? AND technician_id=?"
 	stmt, err := m.db.Prepare(query)
 	if err != nil {
 		panic(err.Error())
 	}
 	defer stmt.Close()
 
-	result, err := stmt.Exec(task.Summary, task.Performed_date, task.TechnicianID, task.Role, task.ID)
+	result, err := stmt.Exec(task.Summary, task.Performed_date, task.Role, task.ID, task.TechnicianID)
 	if err != nil {
 		fmt.Println(err.Error())
 		return task, fmt.Errorf("%d", http.StatusInternalServerError)
@@ -188,11 +188,10 @@ func (m *MysqlMetadata) UpdateTask(task Task) (Task, error) {
 	}
 
 	if rowsAffected == 0 {
-		return task, fmt.Errorf("no changes")
-
+		return Task{}, nil
+	} else {
+		return task, nil
 	}
-
-	return task, nil
 }
 
 func (m *MysqlMetadata) DeleteTask(taskID int) error {

@@ -111,18 +111,27 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			w.WriteHeader(http.StatusOK)
-		// case http.MethodDelete:
-		// 	w.WriteHeader(http.StatusOK)
-		// 	fmt.Fprintf(w, "Deleted")
 		case http.MethodPut:
 			if isManager(role) {
 				http.Error(w, "Unauthorized", http.StatusUnauthorized)
 				return
 			}
+
+			techIdStr := r.Header.Get("TechId")
+			techId, err := strconv.Atoi(techIdStr)
+			if err != nil {
+				http.Error(w, "Invalid", http.StatusBadRequest)
+				return
+			}
 			var task database.Task
-			err := json.NewDecoder(r.Body).Decode(&task)
+			err = json.NewDecoder(r.Body).Decode(&task)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+
+			if techId != task.TechnicianID {
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
 				return
 			}
 
@@ -133,6 +142,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 			task, err = h.m.UpdateTask(task)
 			if err != nil {
+				fmt.Println(err)
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
 			}
