@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"regexp"
 	"strconv"
+	"strings"
 )
 
 type Handler struct {
@@ -39,8 +40,18 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Hello World from an API!")
 		fmt.Println("API hit")
 	} else if r.URL.Path == "/tasks" {
+		role := r.Header.Get("Role")
+		if role == "" {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
 		switch r.Method {
 		case http.MethodGet:
+			if !isManager(role) {
+				fmt.Println("Not a manager")
+				http.Error(w, "Failed", http.StatusForbidden)
+				return
+			}
 			tasks, err := h.m.GetAllTasks()
 			if err != nil {
 				fmt.Println(err)
@@ -54,8 +65,12 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 			return
 		}
-
 	} else if pathRegex := regexp.MustCompile("^/task"); pathRegex.MatchString(r.URL.Path) {
+		role := r.Header.Get("Role")
+		if role == "" {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
 		switch r.Method {
 		case http.MethodGet:
 			techId := r.URL.Query().Get("techID")
@@ -130,9 +145,11 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			json.NewEncoder(w).Encode(task)
 
 		case http.MethodDelete:
-			// if !isManager(r) {
-			// 	return fmt.Errorf("not allowed"), http.StatusForbidden
-			// }
+			if !isManager(role) {
+				fmt.Println("Not a manager")
+				http.Error(w, "Failed", http.StatusForbidden)
+				return
+			}
 
 			taskId := r.URL.Query().Get("id")
 			task_id, err := strconv.Atoi(taskId)
@@ -159,4 +176,8 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+}
+
+func isManager(role string) bool {
+	return strings.ToLower(role) == "manager"
 }
