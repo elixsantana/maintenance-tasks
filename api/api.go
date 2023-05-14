@@ -12,12 +12,15 @@ import (
 )
 
 type Handler struct {
-	m *manager.Manager
+	m      *manager.Manager
+	pathRg *regexp.Regexp
 }
 
 func CreateHandler(manager *manager.Manager) (*Handler, error) {
+	var taskPath *regexp.Regexp = regexp.MustCompile("^/task")
 	return &Handler{
-		m: manager,
+		m:      manager,
+		pathRg: taskPath,
 	}, nil
 }
 
@@ -53,9 +56,10 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 			return
 		}
-	} else if pathRegex := regexp.MustCompile("^/task"); pathRegex.MatchString(r.URL.Path) {
+	} else if h.pathRg.MatchString(r.URL.Path) {
 		switch r.Method {
 		case http.MethodGet:
+			var dTask database.Task
 			var techIdStr string
 			var techId int
 			var err error
@@ -81,30 +85,32 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, "Failed to retrieve task from database", http.StatusInternalServerError)
 				return
 			}
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusOK)
-			json.NewEncoder(w).Encode(task)
+			if task == dTask {
+				w.WriteHeader(http.StatusOK)
+			} else {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusOK)
+				json.NewEncoder(w).Encode(task)
+			}
+
 		case http.MethodPost:
 			if isManager(role) {
-				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				http.Error(w, "Forbidden", http.StatusForbidden)
 				return
 			}
-			err := r.ParseForm()
+
+			var task database.Task
+			err := json.NewDecoder(r.Body).Decode(&task)
 			if err != nil {
-				fmt.Println(err)
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
 			}
 
-			summary := r.PostFormValue("summary")
-			techId := r.PostFormValue("techId")
-			role := r.PostFormValue("role")
-
-			if summary == "" || techId == "" || role == "" {
+			if task.Summary == "" || task.TechnicianID < 1 || task.Role == "" {
 				http.Error(w, "Missing required parameters", http.StatusBadRequest)
 				return
 			}
-			err = h.m.CreateTask(summary, techId, role)
+			err = h.m.CreateTask(task.Summary, task.TechnicianID, task.Role)
 			if err != nil {
 				fmt.Println(err)
 				http.Error(w, "Failed creating task", http.StatusInternalServerError)
@@ -131,7 +137,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}
 
 			if techId != task.TechnicianID {
-				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				http.Error(w, "Unauthorized", http.StatusForbidden)
 				return
 			}
 

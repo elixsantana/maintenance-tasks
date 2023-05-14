@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	database "maintenance-tasks/storage"
-	"strconv"
 )
 
 type Manager struct {
@@ -50,16 +49,12 @@ func (m *Manager) GetAllTasks() ([]database.Task, error) {
 	return tasks, err
 }
 
-func (m *Manager) CreateTask(summary string, techId string, role string) error {
-	id, err := strconv.Atoi(techId)
-	if id < 1 {
+func (m *Manager) CreateTask(summary string, techId int, role string) error {
+	if techId < 1 {
 		return fmt.Errorf("not valid ID")
 	}
-	if err != nil {
-		return err
-	}
 
-	err = m.databaseMetadata.CreateTask(summary, id, role)
+	err := m.databaseMetadata.CreateTask(summary, techId, role)
 	if err != nil {
 		return err
 	}
