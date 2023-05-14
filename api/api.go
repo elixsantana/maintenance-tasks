@@ -22,29 +22,17 @@ func CreateHandler(manager *manager.Manager) (*Handler, error) {
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-
 	fmt.Println(r.URL)
-	// role := r.Header.Get("Role")
-	// if role == "" {
-	// 	http.Error(w, "Unauthorized", http.StatusUnauthorized)
-	// 	return
-	// }
-
-	// name := r.Header.Get("Name")
-	// if name == "" {
-	// 	http.Error(w, "Name not specified", http.StatusInternalServerError)
-	// 	return
-	// }
+	role := r.Header.Get("Role")
+	if role == "" {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 
 	if r.URL.Path == "/" {
 		fmt.Fprintf(w, "Hello World from an API!")
 		fmt.Println("API hit")
 	} else if r.URL.Path == "/tasks" {
-		role := r.Header.Get("Role")
-		if role == "" {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return
-		}
 		switch r.Method {
 		case http.MethodGet:
 			if !isManager(role) {
@@ -66,11 +54,6 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else if pathRegex := regexp.MustCompile("^/task"); pathRegex.MatchString(r.URL.Path) {
-		role := r.Header.Get("Role")
-		if role == "" {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return
-		}
 		switch r.Method {
 		case http.MethodGet:
 			techId := r.URL.Query().Get("techID")
