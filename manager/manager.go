@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	database "maintenance-tasks/storage"
+	"time"
 )
 
 type TaskAction struct {
@@ -15,7 +16,6 @@ type Manager struct {
 	databaseMetadata *database.MysqlMetadata
 	taskCh           chan TaskAction
 	doneCh           chan bool
-	taskAction       TaskAction
 }
 
 func Create() *Manager {
@@ -60,12 +60,12 @@ func (m *Manager) GetAllTasks() ([]database.Task, error) {
 	return tasks, err
 }
 
-func (m *Manager) CreateTask(summary string, techId int, role string) error {
+func (m *Manager) CreateTask(summary string, techId int, role string, now time.Time) error {
 	if techId < 1 {
 		return fmt.Errorf("not valid ID")
 	}
 
-	err := m.databaseMetadata.CreateTask(summary, techId, role)
+	err := m.databaseMetadata.CreateTask(summary, techId, role, now)
 	if err != nil {
 		return err
 	}

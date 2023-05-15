@@ -114,8 +114,7 @@ func (m *MysqlMetadata) GetAllTasks() ([]Task, error) {
 	return tasks, nil
 }
 
-func (m *MysqlMetadata) CreateTask(summary string, tech_id int, role string) error {
-	now := time.Now()
+func (m *MysqlMetadata) CreateTask(summary string, tech_id int, role string, now time.Time) error {
 	role = strings.ToLower(role)
 
 	stmt, err := m.db.Prepare("INSERT INTO tasks(summary, performed_date, technician_id, role) VALUES (?, ?, ?, ?)")
