@@ -6,8 +6,16 @@ import (
 	database "maintenance-tasks/storage"
 )
 
+type TaskAction struct {
+	task   database.Task
+	action string
+}
+
 type Manager struct {
 	databaseMetadata *database.MysqlMetadata
+	taskCh           chan TaskAction
+	doneCh           chan bool
+	taskAction       TaskAction
 }
 
 func Create() *Manager {
@@ -20,6 +28,8 @@ func Create() *Manager {
 
 	return &Manager{
 		databaseMetadata: mysqlCreate,
+		taskCh:           make(chan TaskAction),
+		doneCh:           make(chan bool),
 	}
 }
 
@@ -34,6 +44,7 @@ func (m *Manager) Start() {
 		log.Fatal(err)
 	}
 
+	m.ReceiveNotification()
 }
 
 func (m *Manager) Stop() {
@@ -88,4 +99,34 @@ func (m *Manager) DeleteTask(taskID int) error {
 	}
 
 	return nil
+}
+
+func (m *Manager) ReceiveNotification() {
+	var resulTaskAction TaskAction
+	go func() {
+		for {
+			select {
+			case resulTaskAction = <-m.taskCh:
+				if resulTaskAction.task.ID > 0 {
+					fmt.Printf("The tech with id #%d performed the task %s on date %s\n", resulTaskAction.task.TechnicianID, resulTaskAction.action, resulTaskAction.task.Performed_date.Format("2006-01-02 15:04:05"))
+				}
+			case <-m.doneCh:
+				fmt.Println("Stopping notifications")
+				return
+			}
+		}
+	}()
+}
+
+func (m *Manager) ExecuteNotification(task database.Task, action string) {
+	var result TaskAction
+	result.task = task
+	result.action = action
+	go func() {
+		m.taskCh <- result
+	}()
+}
+
+func (m *Manager) CloseReceivingChannel() {
+	m.doneCh <- true
 }

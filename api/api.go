@@ -25,7 +25,6 @@ func CreateHandler(manager *manager.Manager) (*Handler, error) {
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	fmt.Println(r.URL)
 	role := r.Header.Get("Role")
 	if role == "" {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
@@ -88,6 +87,9 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			if task == dTask {
 				w.WriteHeader(http.StatusOK)
 			} else {
+				if !isManager(role) {
+					h.m.ExecuteNotification(task, "RETRIEVE TASK")
+				}
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusOK)
 				json.NewEncoder(w).Encode(task)
@@ -116,6 +118,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, "Failed creating task", http.StatusInternalServerError)
 				return
 			}
+			h.m.ExecuteNotification(task, "CREATE TASK")
 			w.WriteHeader(http.StatusOK)
 		case http.MethodPut:
 			if isManager(role) {
@@ -153,6 +156,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
+			h.m.ExecuteNotification(task, "UPDATE TASK")
 			w.WriteHeader(http.StatusOK)
 			json.NewEncoder(w).Encode(task)
 
