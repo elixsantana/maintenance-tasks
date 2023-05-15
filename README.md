@@ -54,7 +54,7 @@ PUT localhost:3000/task
 header: Role: <manager|technician>
 DELETE localhost:3000/task?id=1
 
-# Setup with Microservice (not finished)
+# Setup with Kubernetes and Docker (not finished)
 Installations
 1. install golang
 2. install docker desktop
@@ -74,3 +74,13 @@ Run the following commands in Bash:
 10. ```kubectl apply -f config/service.yaml --namespace maintenance```
 11. ```kubectl apply -f config/mysql-deployment.yaml --namespace maintenance```
 
+# Improvements
+
+1. More unit tests
+2. Hash summary information to protect sensitive data and not persist plain text in database
+3. Implement a message broker with either RabbitMQ or Redis for the notification system
+4. Finish up the Kubernetes setup
+5. Implement an init container to create the database and tables instead of doing it through the code
+6. Implement authentication logic. Right now, I am assuming the header of the HTTP request contains the role and techID. This is not safe.
+7. Create script to automatically run all commands for the Kubernetes setup
+8. Better logging
