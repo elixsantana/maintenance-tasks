@@ -4,18 +4,52 @@ The technician performs tasks and is only able to see, create or update his own 
 The manager can see tasks from all the technicians, delete them, and should be notified when some tech performs a task.
 A task has a summary (max: 2500 characters) and a date when it was performed, the summary from the task can contain personal information.
 
-### Setup
+# Setup 
+
+### Standalone (Wihtout K8s)
 1) Clone https://github.com/elixsantana/maintenance-tasks.git
-2) cd /path/to/project  i.e. ~/maintenance-tasks
-4) Configure your local MySQL root password and set it to 'test'
-5) Start the MySQL server (port 3306)
+2) cd ```/path/to/project```  i.e. ~/maintenance-tasks
+4) Download MySQL 5.7 or above and configure the root password and set it to ```test```
+5) Start the MySQL server (port 3306).
 5) ```go run main.go```
-6) Use localhost on port 3000 for HTTP requests
-7) 'Role' and/or 'TechId' header key-values are needed (This is mocking an authentication and authorization system. This is not safe for production environments)
-8) HTTP requests examples below
+6) Use localhost on port 3000 for HTTP requests.
+7) ```Role``` and/or ```TechId``` header key-values are needed (This is mocking an authentication and authorization system. This is not safe for production environments).
+8) HTTP requests examples below.
+
+### Containerized. Setup with Kubernetes and Docker
+Installations
+1. Install golang
+2. Install docker desktop
+3. Install minikube
+4. For Windows users: install git bash
+
+Run the following commands in Bash:
+1. Open Docker Desktop and wait for Docker Engine to start
+1. cd /path/to/project
+1. ```minikube start```
+1. ```go mod init maintenance-tasks```
+2. ```go mod tidy```
+3. ```docker build -t maintenance-deployment:latest .```
+4. ```docker build -t maintenance-deployment:latest .```
+5. ```eval $(minikube docker-env)```
+6. ```docker save -o maintenance-deployment.tar maintenance-deployment:latest``` OR (docker images -q maintenance-deployment:latest | xargs docker save | docker load)
+7. ```docker load -i maintenance-deployment.tar``` (Skip if you ran the command with xargs in step 9) 
+8. ```kubectl create namespace maintenance```
+9. ```kubectl apply -f config/deployment.yaml --namespace maintenance ```     
+11. ```kubectl apply -f config/mysql-deployment.yaml --namespace maintenance```
+
+Setting up requests from local machine:
+1. ```kubectl config set-context --current --namespace=maintenance```
+2. ```kubectl get services```
+3. ```kubectl port-forward service/maintenance-deployment 3000:3000```
 
 
-- Setup with microservice below
+Now you can make requests from localhost:3000/ to the containarized app
+
+
+If you need to restart the deployment:
+- ```kubectl get deployments```
+- ```kubectl rollout restart deployment maintenance-runner```
 
 # API Examples
 ### Retrieve all tasks
@@ -35,7 +69,7 @@ Header requirements: Role, TechId (only for technician)
 
     TechId: 1 (Only for technician)
 
-QueryParams requirement: id (task id)
+QueryParams requirement: ```id``` (task id)
 
 ### Create a task
 POST localhost:3000/task
@@ -80,49 +114,13 @@ Header requirements: Role
 
     Role: manager
 
-# Setup with Kubernetes and Docker (not finished)
-Installations
-1. Install golang
-2. Install docker desktop
-3. Install minikube
-4. For Windows users: install git bash
-
-Run the following commands in Bash:
-1. Open Docker Desktop and wait for Docker Engine to start
-1. cd /path/to/project
-1. ```minikube start```
-1. ```go mod init maintenance-tasks```
-2. ```go mod tidy```
-3. ```docker build -t maintenance-deployment:latest .```
-4. ```docker build -t maintenance-deployment:latest .```
-5. ```eval $(minikube docker-env)```
-6. ```docker save -o maintenance-deployment.tar maintenance-deployment:latest``` OR (docker images -q maintenance-deployment:latest | xargs docker save | docker load)
-7. ```docker load -i maintenance-deployment.tar```  
-8. ```kubectl create namespace maintenance```
-9. ```kubectl apply -f config/deployment.yaml --namespace maintenance ```     
-11. ```kubectl apply -f config/mysql-deployment.yaml --namespace maintenance```
-
-Setting up requests from local machine:
-1. ```kubectl config set-context --current --namespace=maintenance```
-2. ```kubectl get services```
-3. ```kubectl port-forward service/maintenance-deployment 3000:3000```
-
-
-Now you can make requests from localhost:3000/ to the service
-
-
-If you need to restart the deployment:
-- ```kubectl get deployments```
-- ```kubectl rollout restart deployment maintenance-runner```
-
 # Improvements
 
-1. More unit tests
-2. Hash summary information to protect sensitive data and not persist plain text in database
-3. Implement a message broker with either RabbitMQ or Redis for the notification system
-4. Finish up the Kubernetes setup
-5. Implement an init container to create the database and tables instead of doing it through the code
+1. More unit tests.
+2. Hash summary information to protect sensitive data and not persist plain text in database.
+3. Implement a message broker with either RabbitMQ or Redis for the notification system.
+5. Implement an init container to create the database and tables instead of doing it through the code.
 6. Implement authentication logic. Right now, I am assuming the header of the HTTP request contains the Role and TechId. This is not safe.
 7. Create script to automatically run all commands for the Kubernetes setup
-8. Load config for Vault or OS env. This will avoid having to rebuild the docker image if the creds are wrong or need to be updated
-8. Better logging
+8. Load config for Vault or OS env. This will avoid having to rebuild the docker image if the creds are wrong or need to be updated.
+8. Better logging.
