@@ -193,7 +193,7 @@ func (h *Handler) updateTask(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if techId != task.TechnicianID {
-		http.Error(w, "Unauthorized", http.StatusForbidden)
+		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
 	}
 
