@@ -22,7 +22,7 @@ GET localhost:3000/tasks
 
 Header requirements: Role
 
-Role: manager
+    Role: manager
 
 
 ### Retrieve a task
@@ -30,9 +30,9 @@ GET localhost:3000/task?id=1
 
 Header requirements: Role, TechId (only for technician)
 
-Role: manager OR Role: technician
+    Role: manager OR Role: technician
 
-TechId: 1 (Only for technician)
+    TechId: 1 (Only for technician)
 
 QueryParams requirement: id (task id)
 
@@ -41,7 +41,7 @@ POST localhost:3000/task
 
 Header requirements: Role
 
-Role: technician
+    Role: technician
 
 Body:
 ```json
@@ -55,9 +55,11 @@ Body:
 
 ### Update a task  
 PUT localhost:3000/task
-Role: technician
 
-TechId: 2
+Header requirements: Role and TechId
+
+    Role: technician
+    TechId: 2
 
 Body:
 ```json
@@ -75,7 +77,7 @@ DELETE localhost:3000/task?id=1
 
 Header requirements: Role
 
-Role: manager
+    Role: manager
 
 # Setup with Kubernetes and Docker (not finished)
 Installations
