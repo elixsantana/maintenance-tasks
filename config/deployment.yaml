@@ -22,9 +22,9 @@ spec:
           containerPort: 3000
         - name: mysql
           containerPort: 3306
-      env:
-        - name: LOCALHOST
-          value: "mysql-deployment.maintenance.svc.cluster.local"
+        env:
+          - name: LOCALHOST
+            value: "mysql-deployment.maintenance.svc.cluster.local"
 
 ---
 apiVersion: v1
