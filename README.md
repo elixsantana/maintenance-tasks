@@ -6,7 +6,7 @@ A task has a summary (max: 2500 characters) and a date when it was performed, th
 
 ### Setup
 1) Clone https://github.com/elixsantana/maintenance-tasks.git
-2) cd to root of project path/maintenance-tasks
+2) cd /path/to/project  i.e. ~/maintenance-tasks
 4) Run mysql service listening to port 3306
 5) ```go run main.go```
 6) Use localhost on port 3000 for HTTP requests
@@ -20,13 +20,27 @@ A task has a summary (max: 2500 characters) and a date when it was performed, th
 ### Retrieve all tasks
 GET localhost:3000/tasks
 
-Header requirements: Role 
+Header requirements: Role
+
 Role: manager
+
+
+### Retrieve a task
+GET localhost:3000/task?id=1
+
+Header requirements: Role, TechId (only for technician)
+
+Role: manager OR Role: technician
+
+TechId: 1 (Only for technician)
+
+QueryParams requirement: id (task id)
 
 ### Create a task
 POST localhost:3000/task
 
-Header requirements: Role 
+Header requirements: Role
+
 Role: technician
 
 Body:
@@ -38,19 +52,12 @@ Body:
 }
 ```
 
-### Retrieve a task
-GET localhost:3000/task?id=1
-
-Header requirements: Role, TechId (only for technician)
-Role: manager OR Role: technician
-TechId: <techId> (Only for technician)
-
-QueryParams requirement: id (task id)
 
 ### Update a task  
 PUT localhost:3000/task
 Role: technician
-TechId: <techId>
+
+TechId: 2
 
 Body:
 ```json
@@ -67,6 +74,7 @@ Body:
 DELETE localhost:3000/task?id=1
 
 Header requirements: Role
+
 Role: manager
 
 # Setup with Kubernetes and Docker (not finished)
@@ -77,7 +85,8 @@ Installations
 4. For Windows users: install git bash
 
 Run the following commands in Bash:
-1. ```go mod init project_test```
+1. cd /path/to/project
+1. ```go mod init maintenance-tasks```
 2. ```go mod tidy```
 3. ```docker build -t maintenance-deployment:latest .```
 4. ```docker build -t maintenance-deployment:latest .```
