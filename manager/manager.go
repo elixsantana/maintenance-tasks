@@ -3,41 +3,41 @@ package manager
 import (
 	"fmt"
 	"log"
-	database "maintenance-tasks/storage"
+	"maintenance-tasks/storage"
 	"time"
 )
 
 type TaskAction struct {
-	task   database.Task
+	task   storage.Task
 	action string
 }
 
 type Manager interface {
 	Start()
 	Stop()
-	GetAllTasks() ([]database.Task, error)
+	GetAllTasks() ([]storage.Task, error)
 	CreateTask(summary string, techId int, role string, now time.Time) error
-	UpdateTask(task database.Task) (database.Task, error)
-	GetTask(task_id int, tech_id int, manager bool) (database.Task, error)
+	UpdateTask(task storage.Task) (storage.Task, error)
+	GetTask(task_id int, tech_id int, manager bool) (storage.Task, error)
 	DeleteTask(taskID int) error
 	ReceiveNotification()
-	ExecuteNotification(task database.Task, action string)
+	ExecuteNotification(task storage.Task, action string)
 	CloseReceivingChannel()
 }
 
 type ManagerImpl struct {
-	databaseMetadata *database.MysqlMetadata
+	databaseMetadata *storage.MysqlMetadata
 	taskCh           chan TaskAction
 	doneCh           chan bool
 }
 
 func Create() *ManagerImpl {
-	config, err := database.LoadMysqlConfig()
+	config, err := storage.LoadMysqlConfig()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	mysqlCreate := database.Create(config)
+	mysqlCreate := storage.Create(config)
 
 	return &ManagerImpl{
 		databaseMetadata: mysqlCreate,
@@ -64,10 +64,10 @@ func (m *ManagerImpl) Stop() {
 	m.databaseMetadata.Close()
 }
 
-func (m *ManagerImpl) GetAllTasks() ([]database.Task, error) {
+func (m *ManagerImpl) GetAllTasks() ([]storage.Task, error) {
 	tasks, err := m.databaseMetadata.GetAllTasks()
 	if err != nil {
-		return []database.Task{}, err
+		return []storage.Task{}, err
 	}
 
 	return tasks, err
@@ -86,19 +86,19 @@ func (m *ManagerImpl) CreateTask(summary string, techId int, role string, now ti
 	return nil
 }
 
-func (m *ManagerImpl) UpdateTask(task database.Task) (database.Task, error) {
+func (m *ManagerImpl) UpdateTask(task storage.Task) (storage.Task, error) {
 	task, err := m.databaseMetadata.UpdateTask(task)
 	if err != nil {
-		return database.Task{}, err
+		return storage.Task{}, err
 	}
 
 	return task, err
 }
 
-func (m *ManagerImpl) GetTask(task_id int, tech_id int, manager bool) (database.Task, error) {
+func (m *ManagerImpl) GetTask(task_id int, tech_id int, manager bool) (storage.Task, error) {
 	task, err := m.databaseMetadata.GetTask(task_id, tech_id, manager)
 	if err != nil {
-		return database.Task{}, err
+		return storage.Task{}, err
 	}
 
 	return task, err
@@ -131,7 +131,7 @@ func (m *ManagerImpl) ReceiveNotification() {
 	}()
 }
 
-func (m *ManagerImpl) ExecuteNotification(task database.Task, action string) {
+func (m *ManagerImpl) ExecuteNotification(task storage.Task, action string) {
 	var result TaskAction
 	result.task = task
 	result.action = action

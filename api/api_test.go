@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"maintenance-tasks/manager"
-	database "maintenance-tasks/storage"
+	"maintenance-tasks/storage"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -72,7 +72,7 @@ func TestHandler_ServeHTTP_Tasks_Get(t *testing.T) {
 	if err != nil {
 		return
 	}
-	var actualBody []database.Task
+	var actualBody []storage.Task
 	_ = json.Unmarshal(body, &actualBody)
 
 	expectedBody := GetMockDataSlice(0)
@@ -92,9 +92,9 @@ func TestHandler_ServeHTTP_Task_Get(t *testing.T) {
 		return
 	}
 
-	var act database.Task
+	var act storage.Task
 	_ = json.Unmarshal(body, &act)
-	var actualBody []database.Task
+	var actualBody []storage.Task
 	actualBody = append(actualBody, act)
 
 	expectedBody := GetMockDataSlice(taskId)
@@ -159,16 +159,16 @@ func (t TestManager) Start() {
 func (t TestManager) Stop() {
 
 }
-func (t TestManager) GetAllTasks() ([]database.Task, error) {
+func (t TestManager) GetAllTasks() ([]storage.Task, error) {
 	return GetMockDataSlice(0), nil
 }
 func (t TestManager) CreateTask(summary string, techId int, role string, now time.Time) error {
 	return nil
 }
-func (t TestManager) UpdateTask(task database.Task) (database.Task, error) {
+func (t TestManager) UpdateTask(task storage.Task) (storage.Task, error) {
 	return ModifyTaskMockData(task), nil
 }
-func (t TestManager) GetTask(task_id int, tech_id int, manager bool) (database.Task, error) {
+func (t TestManager) GetTask(task_id int, tech_id int, manager bool) (storage.Task, error) {
 	task := GetMockDataSlice(task_id)
 	return task[0], nil
 }
@@ -179,7 +179,7 @@ func (t TestManager) DeleteTask(taskID int) error {
 func (t TestManager) ReceiveNotification() {
 
 }
-func (t TestManager) ExecuteNotification(task database.Task, action string) {
+func (t TestManager) ExecuteNotification(task storage.Task, action string) {
 
 }
 func (t TestManager) CloseReceivingChannel() {
