@@ -93,12 +93,6 @@ func (h *Handler) handleTask(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) getTasks(w http.ResponseWriter, isManager bool) {
-	if !isManager {
-		fmt.Println("Not a manager")
-		http.Error(w, "Failed", http.StatusForbidden)
-		return
-	}
-
 	tasks, err := h.manager.GetAllTasks()
 	if err != nil {
 		fmt.Println(err)
@@ -215,12 +209,6 @@ func (h *Handler) updateTask(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) deleteTask(w http.ResponseWriter, r *http.Request, isManager bool) {
-	if !isManager {
-		fmt.Println("Not a manager")
-		http.Error(w, "Failed", http.StatusForbidden)
-		return
-	}
-
 	taskId := r.URL.Query().Get("id")
 	task_id, err := strconv.Atoi(taskId)
 	if err != nil {
