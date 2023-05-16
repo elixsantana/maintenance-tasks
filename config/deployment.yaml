@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: maintenance-runner
+  namespace: maintenance
 spec:
   selector:
     matchLabels:
@@ -16,16 +17,26 @@ spec:
       - name: maintenance-deployment
         image: maintenance-deployment:latest
         imagePullPolicy: Never
-        env:
-        - name: DB_PORT
-          value: "3306"
-        - name: DB_USER
-          value: "root"
-        - name: DB_PASSWORD
-          value: "password"
-        - name: DB_NAME
-          value: "mydb"
-        - name: APP_PORT
-          value: "8080"
         ports:
-        - containerPort: 8080
+        - name: http
+          containerPort: 3000
+        - name: mysql
+          containerPort: 3306
+      env:
+        - name: LOCALHOST
+          value: "mysql-deployment.maintenance.svc.cluster.local"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: maintenance-deployment
+  namespace: maintenance
+spec:
+  type: ClusterIP
+  selector:
+    app: maintenance-deployment
+  ports:
+    - name: http
+      port: 3000
+      targetPort: 3000

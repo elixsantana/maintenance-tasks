@@ -1,5 +1,7 @@
 package storage
 
+import "os"
+
 type MysqlConfig struct {
 	User     string
 	Password string
@@ -8,15 +10,20 @@ type MysqlConfig struct {
 }
 
 func LoadMysqlConfig() (*MysqlConfig, error) {
+	actualHost := "localhost"
+	host, exists := os.LookupEnv("LOCALHOST")
+	if exists {
+		actualHost = host
+	}
+
 	user := "root"
 	password := "test"
-	host := "localhost"
 	port := 3306
 
 	return &MysqlConfig{
 		User:     user,
 		Password: password,
-		Host:     host,
+		Host:     actualHost,
 		Port:     port,
 	}, nil
 }

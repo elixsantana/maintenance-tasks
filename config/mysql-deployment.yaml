@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: mysql
+  namespace: maintenance
 spec:
   selector:
     matchLabels:
@@ -19,16 +20,26 @@ spec:
           - containerPort: 3306
         env:
           - name: MYSQL_ROOT_PASSWORD
-            value: admin
-          - name: MYSQL_DATABASE
-            value: maintenance
-          - name: MYSQL_USER
-            value: elix
-          - name: MYSQL_PASSWORD
-            value: admin123
+            value: test
         volumeMounts:
           - name: mysql-persistent-storage
             mountPath: /var/lib/mysql
       volumes:
         - name: mysql-persistent-storage
           emptyDir: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-deployment
+  namespace: maintenance
+spec:
+  type: ClusterIP
+  selector:
+    app: mysql-deployment
+  ports:
+    - name: tcp
+      protocol: TCP
+      port: 3306
+      targetPort: 3306

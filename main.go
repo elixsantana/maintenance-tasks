@@ -17,6 +17,7 @@ type handler struct {
 }
 
 func main() {
+	fmt.Println("Starting app")
 	manager := manager.Create()
 	manager.Start()
 
@@ -41,7 +42,7 @@ func main() {
 }
 
 func startServer(wg *sync.WaitGroup, srv *http.Server) {
-	fmt.Println("Starting server")
+	fmt.Println("Starting HTTP server")
 	defer wg.Done()
 	err := srv.ListenAndServe()
 	if err != http.ErrServerClosed {
