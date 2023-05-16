@@ -11,11 +11,20 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
+//go:generate mockgen -destination=mock.go -package=storage . Database
+type Database interface {
+	Ping() error
+	Exec(query string, args ...interface{}) (sql.Result, error)
+	Query(query string, args ...interface{}) (*sql.Rows, error)
+	Prepare(query string) (*sql.Stmt, error)
+	Close() error
+}
+
 type MysqlMetadata struct {
 	config *MysqlConfig
 	uri    string
 	mutex  sync.Mutex
-	db     *sql.DB
+	db     Database
 }
 
 type Task struct {
