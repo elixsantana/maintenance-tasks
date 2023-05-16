@@ -3,23 +3,33 @@ Develop a software to account for maintenance tasks performed during a working d
 The technician performs tasks and is only able to see, create or update his own performed tasks.
 The manager can see tasks from all the technicians, delete them, and should be notified when some tech performs a task.
 A task has a summary (max: 2500 characters) and a date when it was performed, the summary from the task can contain personal information.
+
 ### Setup
 1) Clone https://github.com/elixsantana/maintenance-tasks.git
 2) cd to root of project path/maintenance-tasks
-4) Run mysql service
+4) Run mysql service listening to port 3306
 5) ```go run main.go```
-3) Make a HTTP request like the ones explain below
+6) Use localhost on port 3000 for HTTP requests
+7) 'Role' and/or 'TechId' header key-values are needed (This is mocking an authentication and authorization system. This is not safe for production environments)
+8) HTTP requests examples below
+
 
 - Setup with microservice below
 
 # API Examples
 ### Retrieve all tasks
-header: Role: <manager|technician>
 GET localhost:3000/tasks
 
+Header requirements: Role 
+Role: manager
+
 ### Create a task
-header: Role: <manager|technician>
 POST localhost:3000/task
+
+Header requirements: Role 
+Role: technician
+
+Body:
 ```json
 {
     "summary": "Test Te34313223sttt\n",
@@ -27,19 +37,22 @@ POST localhost:3000/task
     "role": "technician"
 }
 ```
+
 ### Retrieve a task
--  Manager
-        header Role: manager
-GET localhost:3000/task?id=1
--  Technician
-header: 
-Role: technician
-TechId: <techId>
 GET localhost:3000/task?id=1
 
+Header requirements: Role, TechId (only for technician)
+Role: manager OR Role: technician
+TechId: <techId> (Only for technician)
+
+QueryParams requirement: id (task id)
+
 ### Update a task  
-header: Role: <manager|technician>
 PUT localhost:3000/task
+Role: technician
+TechId: <techId>
+
+Body:
 ```json
 {
     "id": 1,
@@ -51,14 +64,16 @@ PUT localhost:3000/task
 ```
 
 ### Delete a task
-header: Role: <manager|technician>
 DELETE localhost:3000/task?id=1
+
+Header requirements: Role
+Role: manager
 
 # Setup with Kubernetes and Docker (not finished)
 Installations
-1. install golang
-2. install docker desktop
-3. install minikube
+1. Install golang
+2. Install docker desktop
+3. Install minikube
 4. For Windows users: install git bash
 
 Run the following commands in Bash:
@@ -81,6 +96,6 @@ Run the following commands in Bash:
 3. Implement a message broker with either RabbitMQ or Redis for the notification system
 4. Finish up the Kubernetes setup
 5. Implement an init container to create the database and tables instead of doing it through the code
-6. Implement authentication logic. Right now, I am assuming the header of the HTTP request contains the role and techID. This is not safe.
+6. Implement authentication logic. Right now, I am assuming the header of the HTTP request contains the Role and TechId. This is not safe.
 7. Create script to automatically run all commands for the Kubernetes setup
 8. Better logging
