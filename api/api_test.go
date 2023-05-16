@@ -62,6 +62,95 @@ func TestApi_RouteNotFound(t *testing.T) {
 	assert.Equal(t, r.Code, http.StatusNotFound)
 }
 
+func TestApi_Forbidden(t *testing.T) {
+	headers := []string{"technician", ""}
+	r := createRequest(TestManager{}, "/tasks", "GET", headers, "", t)
+	assert.Equal(t, r.Code, http.StatusForbidden)
+
+	techId := 5
+	headers = []string{"technician", "1"}
+	body := fmt.Sprintf(`{"id":%d,"summary":"Updated Task","performed_date":"2023-05-14T00:00:00Z","technician_id":999,"role":"technician"}`, techId)
+	r = createRequest(TestManager{}, "/task?id=2", "PUT", headers, body, t)
+	assert.Equal(t, r.Code, http.StatusForbidden)
+
+	headers = []string{"technician", ""}
+	r = createRequest(TestManager{}, "/task?id=1", "DELETE", headers, "", t)
+	assert.Equal(t, r.Code, http.StatusForbidden)
+
+	headers = []string{"manager", ""}
+	r = createRequest(TestManager{}, "/task", "POST", headers, "", t)
+	assert.Equal(t, r.Code, http.StatusForbidden)
+
+	headers = []string{"manager", ""}
+	r = createRequest(TestManager{}, "/task", "PUT", headers, "", t)
+	assert.Equal(t, r.Code, http.StatusForbidden)
+}
+
+func TestApi_BadRequest(t *testing.T) {
+	headers := []string{"manager", "20"}
+	r := createRequest(TestManager{}, "/task?id=xx", "DELETE", headers, "", t)
+	assert.Equal(t, r.Code, http.StatusBadRequest)
+
+	headers = []string{"manager", "20"}
+	r = createRequest(TestManager{}, "/task?id=xx", "GET", headers, "", t)
+	assert.Equal(t, r.Code, http.StatusBadRequest)
+
+	headers = []string{"technician", "xx"}
+	r = createRequest(TestManager{}, "/task?id=1", "GET", headers, "", t)
+	assert.Equal(t, r.Code, http.StatusBadRequest)
+
+	task := `{"summaaaaary":"Create Task","tsechnician_id":999,"role":"technician"}`
+	r = createRequest(TestManager{}, "/task", "POST", headers, task, t)
+	assert.Equal(t, r.Code, http.StatusBadRequest)
+
+	task = `{"summaaaaary":"","tsechnician_id":999,"role":"technician"}`
+	r = createRequest(TestManager{}, "/task", "POST", headers, task, t)
+	assert.Equal(t, r.Code, http.StatusBadRequest)
+
+	task = `{"summary":"","technician_id":,"role":"technician"}`
+	r = createRequest(TestManager{}, "/task", "POST", headers, task, t)
+	assert.Equal(t, r.Code, http.StatusBadRequest)
+
+	task = `{"summary":"","technician_id":,"role":"technician"}`
+	r = createRequest(TestManager{}, "/task", "PUT", headers, task, t)
+	assert.Equal(t, r.Code, http.StatusBadRequest)
+
+	task = `{"summary":"Create Task","technician_id":,"role":"technician"}`
+	r = createRequest(TestManager{}, "/task", "POST", headers, task, t)
+	assert.Equal(t, r.Code, http.StatusBadRequest)
+
+	task = `{"summary":"Create Task","technician_id":")&@&^#(&^@&@&@),"role":"technician"}`
+	r = createRequest(TestManager{}, "/task", "PUT", headers, task, t)
+	assert.Equal(t, r.Code, http.StatusBadRequest)
+
+	task = `{"summary":"","technician_id":1,"role":"technician"}`
+	r = createRequest(TestManager{}, "/task", "PUT", headers, task, t)
+	assert.Equal(t, r.Code, http.StatusBadRequest)
+
+	headers = []string{"technician", "1"}
+	task = `{"summarewewy":"Create","technician_id":1,"roewle":"te869T9Hian"}`
+	r = createRequest(TestManager{}, "/task", "PUT", headers, task, t)
+	assert.Equal(t, r.Code, http.StatusBadRequest)
+}
+
+func TestApi_MethodNotAllowed(t *testing.T) {
+	headers := []string{"Manager", "20"}
+	r := createRequest(TestManager{}, "/tasks", "PUT", headers, "", t)
+	assert.Equal(t, r.Code, http.StatusMethodNotAllowed)
+
+	headers = []string{"Manager", "20"}
+	r = createRequest(TestManager{}, "/tasks", "POST", headers, "", t)
+	assert.Equal(t, r.Code, http.StatusMethodNotAllowed)
+
+	headers = []string{"Manager", "20"}
+	r = createRequest(TestManager{}, "/tasks", "PATCH", headers, "", t)
+	assert.Equal(t, r.Code, http.StatusMethodNotAllowed)
+
+	headers = []string{"Manager", "20"}
+	r = createRequest(TestManager{}, "/task", "PATCH", headers, "", t)
+	assert.Equal(t, r.Code, http.StatusMethodNotAllowed)
+}
+
 func TestHandler_ServeHTTP_Tasks_Get(t *testing.T) {
 	headers := []string{"manager", "20"}
 
@@ -106,7 +195,6 @@ func TestHandler_ServeHTTP_Task_Post(t *testing.T) {
 	pathAndQueryParams := "/task"
 	headers := []string{"technician", "999"}
 
-	// Mock the request
 	task := `{"summary":"Create Task","technician_id":999,"role":"technician"}`
 
 	r := createRequest(TestManager{}, pathAndQueryParams, "POST", headers, task, t)
