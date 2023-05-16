@@ -19,7 +19,7 @@ type MysqlMetadata struct {
 }
 
 type Task struct {
-	ID             uint      `json:"id"`
+	ID             int       `json:"id"`
 	Summary        string    `json:"summary"`
 	Performed_date time.Time `json:"performed_date"`
 	TechnicianID   int       `json:"technician_id"`

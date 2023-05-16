@@ -15,11 +15,11 @@ import (
 )
 
 type Handler struct {
-	manager     *manager.Manager
+	manager     manager.Manager
 	taskPathRgx *regexp.Regexp
 }
 
-func CreateHandler(manager *manager.Manager) (*Handler, error) {
+func CreateHandler(manager manager.Manager) (*Handler, error) {
 	taskPathRgx := regexp.MustCompile(`^/task`)
 	return &Handler{
 		manager:     manager,

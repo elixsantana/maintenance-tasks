@@ -12,13 +12,26 @@ type TaskAction struct {
 	action string
 }
 
-type Manager struct {
+type Manager interface {
+	Start()
+	Stop()
+	GetAllTasks() ([]database.Task, error)
+	CreateTask(summary string, techId int, role string, now time.Time) error
+	UpdateTask(task database.Task) (database.Task, error)
+	GetTask(task_id int, tech_id int, manager bool) (database.Task, error)
+	DeleteTask(taskID int) error
+	ReceiveNotification()
+	ExecuteNotification(task database.Task, action string)
+	CloseReceivingChannel()
+}
+
+type ManagerImpl struct {
 	databaseMetadata *database.MysqlMetadata
 	taskCh           chan TaskAction
 	doneCh           chan bool
 }
 
-func Create() *Manager {
+func Create() *ManagerImpl {
 	config, err := database.LoadMysqlConfig()
 	if err != nil {
 		log.Fatal(err)
@@ -26,14 +39,14 @@ func Create() *Manager {
 
 	mysqlCreate := database.Create(config)
 
-	return &Manager{
+	return &ManagerImpl{
 		databaseMetadata: mysqlCreate,
 		taskCh:           make(chan TaskAction),
 		doneCh:           make(chan bool),
 	}
 }
 
-func (m *Manager) Start() {
+func (m *ManagerImpl) Start() {
 	err := m.databaseMetadata.Connect()
 	if err != nil {
 		log.Fatal(err)
@@ -47,11 +60,11 @@ func (m *Manager) Start() {
 	m.ReceiveNotification()
 }
 
-func (m *Manager) Stop() {
+func (m *ManagerImpl) Stop() {
 	m.databaseMetadata.Close()
 }
 
-func (m *Manager) GetAllTasks() ([]database.Task, error) {
+func (m *ManagerImpl) GetAllTasks() ([]database.Task, error) {
 	tasks, err := m.databaseMetadata.GetAllTasks()
 	if err != nil {
 		return []database.Task{}, err
@@ -60,7 +73,7 @@ func (m *Manager) GetAllTasks() ([]database.Task, error) {
 	return tasks, err
 }
 
-func (m *Manager) CreateTask(summary string, techId int, role string, now time.Time) error {
+func (m *ManagerImpl) CreateTask(summary string, techId int, role string, now time.Time) error {
 	if techId < 1 {
 		return fmt.Errorf("not valid ID")
 	}
@@ -73,7 +86,7 @@ func (m *Manager) CreateTask(summary string, techId int, role string, now time.T
 	return nil
 }
 
-func (m *Manager) UpdateTask(task database.Task) (database.Task, error) {
+func (m *ManagerImpl) UpdateTask(task database.Task) (database.Task, error) {
 	task, err := m.databaseMetadata.UpdateTask(task)
 	if err != nil {
 		return database.Task{}, err
@@ -82,7 +95,7 @@ func (m *Manager) UpdateTask(task database.Task) (database.Task, error) {
 	return task, err
 }
 
-func (m *Manager) GetTask(task_id int, tech_id int, manager bool) (database.Task, error) {
+func (m *ManagerImpl) GetTask(task_id int, tech_id int, manager bool) (database.Task, error) {
 	task, err := m.databaseMetadata.GetTask(task_id, tech_id, manager)
 	if err != nil {
 		return database.Task{}, err
@@ -92,7 +105,7 @@ func (m *Manager) GetTask(task_id int, tech_id int, manager bool) (database.Task
 
 }
 
-func (m *Manager) DeleteTask(taskID int) error {
+func (m *ManagerImpl) DeleteTask(taskID int) error {
 	err := m.databaseMetadata.DeleteTask(taskID)
 	if err != nil {
 		return err
@@ -101,7 +114,7 @@ func (m *Manager) DeleteTask(taskID int) error {
 	return nil
 }
 
-func (m *Manager) ReceiveNotification() {
+func (m *ManagerImpl) ReceiveNotification() {
 	var resulTaskAction TaskAction
 	go func() {
 		for {
@@ -118,7 +131,7 @@ func (m *Manager) ReceiveNotification() {
 	}()
 }
 
-func (m *Manager) ExecuteNotification(task database.Task, action string) {
+func (m *ManagerImpl) ExecuteNotification(task database.Task, action string) {
 	var result TaskAction
 	result.task = task
 	result.action = action
@@ -127,6 +140,6 @@ func (m *Manager) ExecuteNotification(task database.Task, action string) {
 	}()
 }
 
-func (m *Manager) CloseReceivingChannel() {
+func (m *ManagerImpl) CloseReceivingChannel() {
 	m.doneCh <- true
 }
